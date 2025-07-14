@@ -1,7 +1,144 @@
+// import 'package:flutter/material.dart';
+
+// class RestaurantOrderPage extends StatefulWidget {
+//   final Map<String, String> restaurant;
+
+//   const RestaurantOrderPage({super.key, required this.restaurant});
+
+//   @override
+//   State<RestaurantOrderPage> createState() => _RestaurantOrderPageState();
+// }
+
+// class _RestaurantOrderPageState extends State<RestaurantOrderPage> {
+//   final _formKey = GlobalKey<FormState>();
+
+//   final TextEditingController nameController = TextEditingController();
+//   final TextEditingController phoneController = TextEditingController();
+
+//   // Exemple de menu
+//   final List<Map<String, dynamic>> menu = [
+//     {'name': 'Poulet Yassa', 'price': 2500, 'quantity': 0},
+//     {'name': 'Thieboudienne', 'price': 3000, 'quantity': 0},
+//     {'name': 'Brochettes de bœuf', 'price': 2000, 'quantity': 0},
+//     {'name': 'Jus de bissap', 'price': 1000, 'quantity': 0},
+//   ];
+
+//   int get totalPrice {
+//     return menu.fold(0, (sum, item) =>
+//   sum + (item['price'] as int) * (item['quantity'] as int));
+
+//   }
+
+//   void _submitOrder() {
+//     if (_formKey.currentState!.validate() && totalPrice > 0) {
+//       showDialog(
+//         context: context,
+//         builder: (_) => AlertDialog(
+//           title: const Text('Commande envoyée'),
+//           content: Text(
+//               'Merci ${nameController.text}, votre commande de ${totalPrice} FCFA a été prise en compte.'),
+//           actions: [
+//             TextButton(
+//               onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+//               child: const Text('Fermer'),
+//             ),
+//           ],
+//         ),
+//       );
+//     } else if (totalPrice == 0) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(content: Text("Veuillez sélectionner au moins un plat.")),
+//       );
+//     }
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(title: Text("Commander chez ${widget.restaurant['name']}")),
+//       body: SingleChildScrollView(
+//         padding: const EdgeInsets.all(16),
+//         child: Form(
+//           key: _formKey,
+//           child: Column(
+//             children: [
+//               // Infos client
+//               TextFormField(
+//                 controller: nameController,
+//                 decoration: const InputDecoration(labelText: "Votre nom", border: OutlineInputBorder()),
+//                 validator: (value) => value!.isEmpty ? 'Entrez votre nom' : null,
+//               ),
+//               const SizedBox(height: 10),
+//               TextFormField(
+//                 controller: phoneController,
+//                 decoration: const InputDecoration(labelText: "Téléphone", border: OutlineInputBorder()),
+//                 keyboardType: TextInputType.phone,
+//                 validator: (value) => value!.isEmpty ? 'Entrez un numéro de téléphone' : null,
+//               ),
+//               const SizedBox(height: 20),
+
+//               // 🍽️ Menu
+//               const Text("Menu", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+//               const SizedBox(height: 10),
+//               ...menu.map((item) {
+//                 return Card(
+//                   child: ListTile(
+//                     title: Text(item['name']),
+//                     subtitle: Text('${item['price']} FCFA'),
+//                     trailing: Row(
+//                       mainAxisSize: MainAxisSize.min,
+//                       children: [
+//                         IconButton(
+//                           icon: const Icon(Icons.remove),
+//                           onPressed: () {
+//                             setState(() {
+//                               if (item['quantity'] > 0) item['quantity']--;
+//                             });
+//                           },
+//                         ),
+//                         Text('${item['quantity']}'),
+//                         IconButton(
+//                           icon: const Icon(Icons.add),
+//                           onPressed: () {
+//                             setState(() {
+//                               item['quantity']++;
+//                             });
+//                           },
+//                         ),
+//                       ],
+//                     ),
+//                   ),
+//                 );
+//               }).toList(),
+
+//               const SizedBox(height: 20),
+//               Text('Total : $totalPrice FCFA', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+//               const SizedBox(height: 20),
+
+//               ElevatedButton.icon(
+//                 onPressed: _submitOrder,
+//                 icon: const Icon(Icons.check),
+//                 label: const Text("Passer la commande"),
+//                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+//               )
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+
+
+
+
+
+
 import 'package:flutter/material.dart';
 
 class RestaurantOrderPage extends StatefulWidget {
-  final Map<String, String> restaurant;
+  final Map<String, dynamic> restaurant;
 
   const RestaurantOrderPage({super.key, required this.restaurant});
 
@@ -11,120 +148,257 @@ class RestaurantOrderPage extends StatefulWidget {
 
 class _RestaurantOrderPageState extends State<RestaurantOrderPage> {
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
-
-  // Exemple de menu
-  final List<Map<String, dynamic>> menu = [
-    {'name': 'Poulet Yassa', 'price': 2500, 'quantity': 0},
-    {'name': 'Thieboudienne', 'price': 3000, 'quantity': 0},
-    {'name': 'Brochettes de bœuf', 'price': 2000, 'quantity': 0},
-    {'name': 'Jus de bissap', 'price': 1000, 'quantity': 0},
-  ];
+  final TextEditingController notesController = TextEditingController();
+  bool _isSubmitting = false;
 
   int get totalPrice {
-    return menu.fold(0, (sum, item) =>
-  sum + (item['price'] as int) * (item['quantity'] as int));
-
+    int price = int.tryParse(widget.restaurant['price'].toString()) ?? 0;
+    int quantity = int.tryParse(widget.restaurant['quantity'].toString()) ?? 0;
+    return price * quantity;
   }
 
-  void _submitOrder() {
-    if (_formKey.currentState!.validate() && totalPrice > 0) {
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Commande envoyée'),
-          content: Text(
-              'Merci ${nameController.text}, votre commande de ${totalPrice} FCFA a été prise en compte.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
-              child: const Text('Fermer'),
-            ),
-          ],
-        ),
-      );
-    } else if (totalPrice == 0) {
+  void _submitOrder() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (totalPrice == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Veuillez sélectionner au moins un plat.")),
       );
+      return;
     }
+
+    setState(() => _isSubmitting = true);
+    
+    await Future.delayed(const Duration(seconds: 1)); // Simulation de traitement
+    
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Commande envoyée'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.check_circle, color: Colors.green, size: 60),
+              const SizedBox(height: 20),
+              Text(
+                'Merci ${nameController.text} !',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              Text('Votre commande de $totalPrice FCFA a été prise en compte.'),
+              if (notesController.text.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                const Text('Notes spéciales :'),
+                Text(notesController.text, style: const TextStyle(fontStyle: FontStyle.italic)),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+            child: const Text('Retour à l\'accueil'),
+          ),
+        ],
+      ),
+    );
+    
+    setState(() => _isSubmitting = false);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Commander chez ${widget.restaurant['name']}")),
+      appBar: AppBar(
+        title: Text("Commander chez ${widget.restaurant['name']}"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                builder: (_) => Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(widget.restaurant['name'], style: Theme.of(context).textTheme.titleLarge),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on, size: 16),
+                          const SizedBox(width: 5),
+                          Text(widget.restaurant['location']),
+                        ],
+                      ),
+                      const SizedBox(height: 15),
+                      Text(widget.restaurant['description'] ?? ''),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Infos client
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: "Votre nom", border: OutlineInputBorder()),
-                validator: (value) => value!.isEmpty ? 'Entrez votre nom' : null,
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: phoneController,
-                decoration: const InputDecoration(labelText: "Téléphone", border: OutlineInputBorder()),
-                keyboardType: TextInputType.phone,
-                validator: (value) => value!.isEmpty ? 'Entrez un numéro de téléphone' : null,
-              ),
-              const SizedBox(height: 20),
-
-              // 🍽️ Menu
-              const Text("Menu", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 10),
-              ...menu.map((item) {
-                return Card(
-                  child: ListTile(
-                    title: Text(item['name']),
-                    subtitle: Text('${item['price']} FCFA'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.remove),
-                          onPressed: () {
-                            setState(() {
-                              if (item['quantity'] > 0) item['quantity']--;
-                            });
-                          },
+              // Section Client
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      const Text('Informations client', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 15),
+                      TextFormField(
+                        controller: nameController,
+                        decoration: const InputDecoration(
+                          labelText: "Votre nom",
+                          prefixIcon: Icon(Icons.person),
+                          border: OutlineInputBorder(),
                         ),
-                        Text('${item['quantity']}'),
-                        IconButton(
-                          icon: const Icon(Icons.add),
-                          onPressed: () {
-                            setState(() {
-                              item['quantity']++;
-                            });
-                          },
+                        validator: (value) => value!.isEmpty ? 'Entrez votre nom' : null,
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: phoneController,
+                        decoration: const InputDecoration(
+                          labelText: "Téléphone",
+                          prefixIcon: Icon(Icons.phone),
+                          border: OutlineInputBorder(),
                         ),
-                      ],
-                    ),
+                        keyboardType: TextInputType.phone,
+                        validator: (value) => value!.isEmpty ? 'Entrez un numéro valide' : null,
+                      ),
+                    ],
                   ),
-                );
-              }).toList(),
-
-              const SizedBox(height: 20),
-              Text('Total : $totalPrice FCFA', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+              ),
               const SizedBox(height: 20),
 
-              ElevatedButton.icon(
-                onPressed: _submitOrder,
-                icon: const Icon(Icons.check),
-                label: const Text("Passer la commande"),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              )
+              // Section Menu
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text("Votre commande", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      const SizedBox(height: 15),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            widget.restaurant['image'],
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        title: Text(widget.restaurant['plat'] ?? 'Plat principal'),
+                        subtitle: Text('${widget.restaurant['price'] ?? '0'} FCFA'),
+                        trailing: QuantitySelector(
+                          quantity: int.tryParse(widget.restaurant['quantity'].toString()) ?? 0,
+                          onChanged: (q) => setState(() => widget.restaurant['quantity'] = q.toString()),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: notesController,
+                        decoration: const InputDecoration(
+                          labelText: "Notes spéciales (allergies, etc.)",
+                          border: OutlineInputBorder(),
+                        ),
+                        maxLines: 2,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Total & Bouton
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Total :', style: TextStyle(fontSize: 18)),
+                          Text('$totalPrice FCFA', 
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _isSubmitting ? null : _submitOrder,
+                          icon: _isSubmitting 
+                              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white))
+                              : const Icon(Icons.check),
+                          label: Text(_isSubmitting ? "Traitement..." : "Confirmer la commande"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class QuantitySelector extends StatelessWidget {
+  final int quantity;
+  final Function(int) onChanged;
+
+  const QuantitySelector({super.key, required this.quantity, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.remove),
+          onPressed: quantity > 0 ? () => onChanged(quantity - 1) : null,
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.grey[200],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Text('$quantity', style: const TextStyle(fontSize: 16)),
+        ),
+        IconButton(
+          icon: const Icon(Icons.add),
+          onPressed: () => onChanged(quantity + 1),
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.grey[200],
+          ),
+        ),
+      ],
     );
   }
 }
